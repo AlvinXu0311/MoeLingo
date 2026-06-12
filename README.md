@@ -2,6 +2,9 @@
 
 Real-time overlay translator for Japanese visual novels / galgames, powered by a
 **local** LLM. 面向日文视觉小说 / galgame 的**本地**实时悬浮翻译工具。
+<img width="799" height="897" alt="8b189ebc-6871-4621-9cb7-e69e17eb54a0" src="https://github.com/user-attachments/assets/89b99b34-eb17-4f74-8942-ae1b9bc389fc" />
+<img width="802" height="905" alt="c375e8b3-7c60-44eb-aea0-f6b092dce762" src="https://github.com/user-attachments/assets/a081eae3-1b2e-4ece-9c2b-f2c30b369fd7" />
+<img width="462" height="334" alt="3ddea980-77a4-457f-bf24-49f39bebbd5b" src="https://github.com/user-attachments/assets/1c75c238-6426-40ba-a7cc-5270a50c71a8" />
 
 Pick a language below — it expands in place, no page jump.
 点下面任意语言就地展开，不会跳转页面。
