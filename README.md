@@ -12,13 +12,9 @@ Real-time overlay translator for Japanese visual novels / galgames, powered by a
 </p>
 
 <p align="center">
-  <img alt="overlay translating in-game" src="https://github.com/user-attachments/assets/89b99b34-eb17-4f74-8942-ae1b9bc389fc" height="240">
-  <img alt="overlay with source text" src="https://github.com/user-attachments/assets/a081eae3-1b2e-4ece-9c2b-f2c30b369fd7" height="240">
-  <img alt="settings dialog" src="https://github.com/user-attachments/assets/1c75c238-6426-40ba-a7cc-5270a50c71a8" height="240">
+  <img alt="overlay translating in-game" src="https://github.com/user-attachments/assets/89b99b34-eb17-4f74-8942-ae1b9bc389fc" height="320">
+  <img alt="overlay with source text" src="https://github.com/user-attachments/assets/a081eae3-1b2e-4ece-9c2b-f2c30b369fd7" height="320">
 </p>
-
-Pick a language below — it expands in place, no page jump.
-点下面任意语言就地展开，不会跳转页面。
 
 <details>
 <summary><h3>English &nbsp;&nbsp;·&nbsp;&nbsp; click to expand / 点击展开</h3></summary>
