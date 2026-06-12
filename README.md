@@ -4,6 +4,14 @@ Real-time overlay translator for Japanese visual novels / galgames, powered by a
 **local** LLM. 面向日文视觉小说 / galgame 的**本地**实时悬浮翻译工具。
 
 <p align="center">
+  <img alt="platform" src="https://img.shields.io/badge/platform-Windows-0078D6?style=for-the-badge">
+  <img alt="python" src="https://img.shields.io/badge/python-3.9–3.11-3776AB?style=for-the-badge&logo=python&logoColor=white">
+  <img alt="LLM" src="https://img.shields.io/badge/LLM-Ollama-4B8BBE?style=for-the-badge">
+  <img alt="OCR" src="https://img.shields.io/badge/OCR-PaddleOCR-FF6F00?style=for-the-badge">
+  <img alt="license" src="https://img.shields.io/badge/license-Apache--2.0-2EA44F?style=for-the-badge">
+</p>
+
+<p align="center">
   <img alt="overlay translating in-game" src="https://github.com/user-attachments/assets/89b99b34-eb17-4f74-8942-ae1b9bc389fc" height="240">
   <img alt="overlay with source text" src="https://github.com/user-attachments/assets/a081eae3-1b2e-4ece-9c2b-f2c30b369fd7" height="240">
   <img alt="settings dialog" src="https://github.com/user-attachments/assets/1c75c238-6426-40ba-a7cc-5270a50c71a8" height="240">
@@ -12,8 +20,8 @@ Real-time overlay translator for Japanese visual novels / galgames, powered by a
 Pick a language below — it expands in place, no page jump.
 点下面任意语言就地展开，不会跳转页面。
 
-<details open>
-<summary><b>English</b></summary>
+<details>
+<summary><h3>English &nbsp;&nbsp;·&nbsp;&nbsp; click to expand / 点击展开</h3></summary>
 
 <br>
 
@@ -153,7 +161,7 @@ game window --[PrintWindow]--> crop text region --[PaddleOCR]--> local LLM (Olla
 </details>
 
 <details>
-<summary><b>中文</b></summary>
+<summary><h3>中文 &nbsp;&nbsp;·&nbsp;&nbsp; 点击展开 / click to expand</h3></summary>
 
 <br>
 
