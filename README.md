@@ -17,7 +17,7 @@ Real-time overlay translator for Japanese visual novels / galgames, powered by a
 </p>
 
 <details>
-<summary><h3>English &nbsp;&nbsp;·&nbsp;&nbsp; click to expand / 点击展开</h3></summary>
+<summary><h3>English &nbsp;&nbsp;·&nbsp;&nbsp; click to expand </h3></summary>
 
 <br>
 
@@ -157,7 +157,7 @@ game window --[PrintWindow]--> crop text region --[PaddleOCR]--> local LLM (Olla
 </details>
 
 <details>
-<summary><h3>中文 &nbsp;&nbsp;·&nbsp;&nbsp; 点击展开 / click to expand</h3></summary>
+<summary><h3>中文 &nbsp;&nbsp;·&nbsp;&nbsp; 点击展开 </h3></summary>
 
 <br>
 
