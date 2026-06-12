@@ -1,0 +1,9 @@
+# MoeLingo dependencies (Windows). tkinter ships with the standard CPython installer.
+paddleocr>=2.7,<2.8
+paddlepaddle==2.6.2
+pywin32>=306
+mss>=9.0
+Pillow>=10.0
+numpy>=1.24
+requests>=2.31
+rapidfuzz>=3.0

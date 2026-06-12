@@ -1,0 +1,16 @@
+# user runtime config (window/region/game-info are machine- and game-specific)
+config.json
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
