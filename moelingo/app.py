@@ -23,13 +23,17 @@ ROOT = os.path.dirname(HERE)
 # user config lives at the repo root (gitignored), not inside the package
 CONFIG = os.path.join(ROOT, 'config.json')
 
+def normalize_url(u):
+    u = (u or '').strip().rstrip('/')
+    if u and '://' not in u:
+        u = 'http://' + u
+    return u or 'http://localhost:11434'
+
+# Defaults (overridable by env, then by the in-app Settings dialog -> config.json).
 # A dedicated var (NOT the conventional OLLAMA_HOST, which is often '0.0.0.0' for serving).
-_OLLAMA = os.environ.get('MOELINGO_OLLAMA_URL', 'http://localhost:11434').rstrip('/')
-if '://' not in _OLLAMA:
-    _OLLAMA = 'http://' + _OLLAMA
-OLLAMA_HOST = _OLLAMA
-OLLAMA_MODEL = os.environ.get('MOELINGO_MODEL', 'qwen2.5:7b-instruct')
-OCR_LANG = os.environ.get('MOELINGO_OCR_LANG', 'japan')
+DEFAULT_OLLAMA_URL = normalize_url(os.environ.get('MOELINGO_OLLAMA_URL', 'http://localhost:11434'))
+DEFAULT_MODEL = os.environ.get('MOELINGO_MODEL', 'qwen2.5:7b-instruct')
+DEFAULT_OCR_LANG = os.environ.get('MOELINGO_OCR_LANG', 'japan')
 CAP_INTERVAL = 0.12 # seconds between captures
 STABLE_FRAMES = 2   # identical frames required before OCR (skip typewriter anim)
 DEFAULT_FRAC = {'x': 0.04, 'y': 0.72, 'w': 0.92, 'h': 0.26}  # typical ADV textbox strip
@@ -43,8 +47,11 @@ TGT_NAME = {'zh': '简体中文', 'en': 'English'}
 STRINGS = {
  'zh': {
    'app_title': '实时翻译', 'btn_window': '选择窗口', 'btn_region': '选择区域',
-   'btn_gameinfo': '游戏信息', 'btn_start': '▶ 开始', 'btn_pause': '⏸ 暂停',
+   'btn_gameinfo': '游戏信息', 'btn_settings': '设置', 'btn_start': '▶ 开始', 'btn_pause': '⏸ 暂停',
    'chk_src': '原文', 'ui_lang': '界面', 'tgt_lang': '译文',
+   'set_title': '设置 / 模型', 'set_model': '模型 (Ollama)', 'set_url': 'Ollama 地址',
+   'set_ocr': 'OCR 语言', 'set_saved': '设置已保存',
+   'set_note': '模型与地址即时生效；OCR 语言改动需重启程序。OCR 语言用 PaddleOCR 代码（japan/ch/en/korean…）。',
    'st_init': '初始化…', 'st_loadocr': '加载OCR模型（PaddleOCR 日文）…', 'st_ready': '就绪',
    'st_nowin': '找不到窗口「{title}」', 'st_ocrerr': 'OCR错误:{e}', 'st_pickwin': '请先选择窗口',
    'st_winsel': '已选窗口：{t} ({e})', 'st_region': '区域已保存', 'st_gisaved': '游戏信息已保存',
@@ -61,8 +68,12 @@ STRINGS = {
  },
  'en': {
    'app_title': 'Live Translate', 'btn_window': 'Window', 'btn_region': 'Region',
-   'btn_gameinfo': 'Game Info', 'btn_start': '▶ Start', 'btn_pause': '⏸ Pause',
+   'btn_gameinfo': 'Game Info', 'btn_settings': 'Settings', 'btn_start': '▶ Start', 'btn_pause': '⏸ Pause',
    'chk_src': 'Source', 'ui_lang': 'UI', 'tgt_lang': 'To',
+   'set_title': 'Settings / Model', 'set_model': 'Model (Ollama)', 'set_url': 'Ollama URL',
+   'set_ocr': 'OCR language', 'set_saved': 'Settings saved',
+   'set_note': 'Model and URL apply immediately; changing the OCR language needs a restart. '
+               'Use a PaddleOCR language code (japan/ch/en/korean…).',
    'st_init': 'Initializing…', 'st_loadocr': 'Loading OCR (PaddleOCR Japanese)…', 'st_ready': 'Ready',
    'st_nowin': 'Window not found: {title}', 'st_ocrerr': 'OCR error: {e}', 'st_pickwin': 'Pick a window first',
    'st_winsel': 'Window: {t} ({e})', 'st_region': 'Region saved', 'st_gisaved': 'Game info saved',
@@ -101,7 +112,6 @@ def kana_kanji_count(s):
     return n
 
 # ------------------------------------------------------------------------- Ollama
-OLLAMA_CHAT = OLLAMA_HOST + '/api/chat'
 RULES = {
  'zh': ("你是galgame翻译。只把【用户消息里给的那一句日文】翻译成自然口语的简体中文。"
         "只输出这一句的译文本身，不要解释、不要拼音、不要附日文原文。"
@@ -142,17 +152,17 @@ def _echoes_info(out, game_info):
     W = 16
     return any(o[i:i + W] in g for i in range(0, max(0, len(o) - W + 1)))
 
-def _ollama_chat(system, user, temp):
+def _ollama_chat(url, model, system, user, temp):
     import requests
-    r = requests.post(OLLAMA_CHAT, json={
-        'model': OLLAMA_MODEL, 'stream': False,
+    r = requests.post(normalize_url(url) + '/api/chat', json={
+        'model': model, 'stream': False,
         'messages': [{'role': 'system', 'content': system},
                      {'role': 'user', 'content': user}],
         'options': {'temperature': temp, 'num_predict': 200},
     }, timeout=60)
     return r.json().get('message', {}).get('content', '').strip()
 
-def ollama_translate(jp, game_info=None, target='zh'):
+def ollama_translate(jp, game_info=None, target='zh', model=DEFAULT_MODEL, url=DEFAULT_OLLAMA_URL):
     target = target if target in RULES else 'zh'
     def system(with_info):
         s = RULES[target]
@@ -161,10 +171,10 @@ def ollama_translate(jp, game_info=None, target='zh'):
         return s
     user = USER_MSG[target].format(jp=jp)
     try:
-        out = _ollama_chat(system(True), user, 0.0)
+        out = _ollama_chat(url, model, system(True), user, 0.0)
         # if it parroted the background, or left source-language text, redo without info
         if _echoes_info(out, game_info) or _residual_jp(out, target):
-            out2 = _ollama_chat(system(False), user, 0.2)
+            out2 = _ollama_chat(url, model, system(False), user, 0.2)
             if out2:
                 out = out2
         return out
@@ -176,11 +186,11 @@ class PaddleJaOCR:
     """PaddleOCR Japanese (detection + recognition in one). Handles long lines and
     textured backgrounds far better than manga-ocr (which hallucinated on 30+ char
     lines). Self-contained — no torch. Keeps only lines with >=2 kana/kanji."""
-    def __init__(self):
+    def __init__(self, lang=DEFAULT_OCR_LANG):
         import numpy as np
         from paddleocr import PaddleOCR
         self.np = np
-        self.po = PaddleOCR(use_angle_cls=False, lang=OCR_LANG, show_log=False)
+        self.po = PaddleOCR(use_angle_cls=False, lang=lang, show_log=False)
 
     def read(self, crop_bgr):
         """Return recognized Japanese text lines in reading order."""
@@ -212,9 +222,9 @@ class Worker(threading.Thread):
         import wincap
         from PIL import Image
         import numpy as np
-        ui0 = self.get_state().get('ui', 'zh')
-        self.out.put({'status': STRINGS[ui0]['st_loadocr']})
-        ocr = PaddleJaOCR()
+        st0 = self.get_state()
+        self.out.put({'status': STRINGS[st0.get('ui', 'zh')]['st_loadocr']})
+        ocr = PaddleJaOCR(st0.get('ocr_lang', DEFAULT_OCR_LANG))
         self.out.put({'status': STRINGS[self.get_state().get('ui', 'zh')]['st_ready']})
         from rapidfuzz import fuzz
         last_hash = ocr_hash = None
@@ -273,7 +283,9 @@ class Worker(threading.Thread):
         ui, target = state.get('ui', 'zh'), state.get('target', 'zh')
         S = STRINGS[ui]
         self.out.put({'jp': jp, 'zh': S['translating'], 'src': S['src_live_ocr'].format(t=ocr_t)})
-        zh = ollama_translate(jp, game_info=state.get('game_info'), target=target)
+        zh = ollama_translate(jp, game_info=state.get('game_info'), target=target,
+                              model=state.get('model', DEFAULT_MODEL),
+                              url=state.get('ollama_url', DEFAULT_OLLAMA_URL))
         self.out.put({'jp': jp, 'zh': zh, 'src': S['src_live']})
 
 NAME2CODE = {'中文': 'zh', 'English': 'en'}
@@ -292,6 +304,10 @@ class App:
         self.game_info = cfg.get('game_info', '')
         self.ui_lang = cfg.get('ui_lang', 'zh')        # interface language
         self.tgt_lang = cfg.get('target_lang', 'zh')   # translate INTO this
+        # LLM / OCR settings (editable in the Settings dialog; default to env/built-in)
+        self.model = cfg.get('model', DEFAULT_MODEL)
+        self.ollama_url = cfg.get('ollama_url', DEFAULT_OLLAMA_URL)
+        self.ocr_lang = cfg.get('ocr_lang', DEFAULT_OCR_LANG)
         self.out_q = queue.Queue()
         self.show_src = tk.BooleanVar(value=True)
         self.cur = {'jp': '', 'zh': '', 'src': ''}
@@ -301,6 +317,7 @@ class App:
         self.w['btn_window'] = tk.Button(bar, command=self.select_window); self.w['btn_window'].pack(side='left', padx=2)
         self.w['btn_region'] = tk.Button(bar, command=self.select_region); self.w['btn_region'].pack(side='left', padx=2)
         self.w['btn_gameinfo'] = tk.Button(bar, command=self.edit_game_info); self.w['btn_gameinfo'].pack(side='left', padx=2)
+        self.w['btn_settings'] = tk.Button(bar, command=self.edit_settings); self.w['btn_settings'].pack(side='left', padx=2)
         self.btn_run = tk.Button(bar, command=self.toggle); self.btn_run.pack(side='left', padx=2)
         self.w['chk_src'] = tk.Checkbutton(bar, variable=self.show_src, command=self.refresh)
         self.w['chk_src'].pack(side='left', padx=2)
@@ -341,8 +358,8 @@ class App:
     def _apply_ui_lang(self):
         self.root.title(self.t('app_title'))
         for wkey, skey in (('btn_window', 'btn_window'), ('btn_region', 'btn_region'),
-                           ('btn_gameinfo', 'btn_gameinfo'), ('chk_src', 'chk_src'),
-                           ('lbl_ui', 'ui_lang'), ('lbl_tgt', 'tgt_lang')):
+                           ('btn_gameinfo', 'btn_gameinfo'), ('btn_settings', 'btn_settings'),
+                           ('chk_src', 'chk_src'), ('lbl_ui', 'ui_lang'), ('lbl_tgt', 'tgt_lang')):
             self.w[wkey].config(text=self.t(skey))
         self.btn_run.config(text=self.t('btn_start' if self.worker_paused() else 'btn_pause'))
         self._upd_winlabel()
@@ -354,7 +371,32 @@ class App:
 
     def _state(self):
         return {'title': self.win_title, 'exe': self.win_exe, 'frac': self.frac,
-                'game_info': self.game_info, 'ui': self.ui_lang, 'target': self.tgt_lang}
+                'game_info': self.game_info, 'ui': self.ui_lang, 'target': self.tgt_lang,
+                'model': self.model, 'ollama_url': self.ollama_url, 'ocr_lang': self.ocr_lang}
+
+    def edit_settings(self):
+        was = self.worker.paused; self.worker.paused = True
+        dlg = tk.Toplevel(self.root); dlg.title(self.t('set_title')); dlg.attributes('-topmost', True)
+        dlg.geometry('460x300+220+200'); dlg.resizable(False, False)
+        rows = [('set_model', self.model), ('set_url', self.ollama_url), ('set_ocr', self.ocr_lang)]
+        entries = {}
+        for i, (skey, val) in enumerate(rows):
+            tk.Label(dlg, text=self.t(skey), anchor='w').grid(row=i, column=0, sticky='w', padx=10, pady=(12 if i == 0 else 6, 0))
+            e = tk.Entry(dlg, width=42); e.insert(0, val)
+            e.grid(row=i, column=1, sticky='we', padx=10, pady=(12 if i == 0 else 6, 0))
+            entries[skey] = e
+        tk.Label(dlg, text=self.t('set_note'), anchor='w', justify='left', fg='#888',
+                 wraplength=420).grid(row=3, column=0, columnspan=2, sticky='w', padx=10, pady=(10, 4))
+        def save():
+            self.model = entries['set_model'].get().strip() or DEFAULT_MODEL
+            self.ollama_url = normalize_url(entries['set_url'].get())
+            self.ocr_lang = entries['set_ocr'].get().strip() or DEFAULT_OCR_LANG
+            self._save_cfg(model=self.model, ollama_url=self.ollama_url, ocr_lang=self.ocr_lang)
+            self.status.config(text=self.t('set_saved'))
+            dlg.destroy(); self.worker.paused = was
+        tk.Button(dlg, text=self.t('gi_save'), command=save, width=10).grid(
+            row=4, column=0, columnspan=2, pady=14)
+        dlg.bind('<Escape>', lambda e: (dlg.destroy(), setattr(self.worker, 'paused', was)))
 
     def _upd_winlabel(self):
         info = self.t('have_info') if self.game_info.strip() else ''
